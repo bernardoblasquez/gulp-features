@@ -1,6 +1,8 @@
 /* Gulp core */
 var gulp = require('gulp');
 
+var usemin = require('gulp-usemin');
+
 /* utils */
 var gutil = require('gulp-util');
 var clean = require('gulp-clean');
@@ -52,7 +54,7 @@ gulp.task('compile-coffee-all', function() {
 
 gulp.task('clean', function() {
 
-	gulp.src('dist/', {read: false})
+	gulp.src('dist', {read: false})
 	.pipe(clean())
 	.pipe(notify({ message: 'Clean task complete' }));
 
@@ -71,6 +73,16 @@ gulp.task('imagemin', function() {
     .pipe(cache(imagemin({ optimizationLevel: 7, progressive: true, interlaced: true })))
     .pipe(gulp.dest('dist/img'))
     .pipe(notify({ message: 'Imagemin task complete' }));
+});
+
+gulp.task('usemin', function() {
+  gulp.src('public/**/*.html')
+    .pipe(usemin({
+      cssmin: true,
+      htmlmin: true,
+      jsmin: true
+    }))
+    .pipe(gulp.dest('dist'));
 });
 
 gulp.task('server', function() {
