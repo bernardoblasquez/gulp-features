@@ -6,9 +6,10 @@ var gutil = require('gulp-util');
 var clean = require('gulp-clean');
 var notify = require('gulp-notify');
 
-/* JS Hint*/
+/* Linting Tools*/
 var jshint = require('gulp-jshint');
 var jshintStylish = require('jshint-stylish');
+var csslint = require('gulp-csslint');
 
 /* Preprocessors */
 var less = require('gulp-less');
@@ -18,13 +19,9 @@ var coffee = require('gulp-coffee');
 var imagemin = require('gulp-imagemin');
 var cache = require('gulp-cache'); // cache files
 
-/* Watch stuff */ 
-var watch= require('gulp-watch');
+gulp.task('default', function() {
 
-gulp.task('default',[], function() {
-    gulp.run('clean', 'copy');
 });
-
 
 gulp.task('jshint-all', function() {
 
@@ -55,13 +52,13 @@ gulp.task('compile-coffee-all', function() {
 
 gulp.task('clean', function() {
 
-	return gulp.src('dist/', {read: false})
+	gulp.src('dist/', {read: false})
 	.pipe(clean())
 	.pipe(notify({ message: 'Clean task complete' }));
 
 });
 
-gulp.task('copy', function() {
+gulp.task('copy',function() {
 
 	return gulp.src('public/**/*')
 	.pipe(gulp.dest('dist'))
@@ -74,6 +71,48 @@ gulp.task('imagemin', function() {
     .pipe(cache(imagemin({ optimizationLevel: 7, progressive: true, interlaced: true })))
     .pipe(gulp.dest('dist/img'))
     .pipe(notify({ message: 'Imagemin task complete' }));
+});
+
+gulp.task('server', function() {
+
+	 gulp.watch('public/less/**/*.less', function(event) {
+	 	var msg =  'LESS COMPILED: ' + event.path;
+	 	gulp.src(event.path)
+		.pipe(less())
+		.pipe(gulp.dest('public/css'))
+		.pipe(notify({ message: msg}));
+		gutil.log(msg);
+
+	 });
+
+	 gulp.watch('public/coffee/**/*.coffee', function(event) {
+	 	var msg =  'COFFESCRIPT COMPILED: ' + event.path;
+	 	gutil.log('File '+event.path+' was '+event.type+', running tasks...');
+	 	gulp.src(event.path)
+		.pipe(coffee().on('error', gutil.log))
+		.pipe(gulp.dest('public/js'))
+		.pipe(notify({ message: msg}));
+		gutil.log(msg);
+
+	 });
+
+	 gulp.watch('public/js/**/*.js', function(event) {
+	 	var msg =  'JSHINTED: ' + event.path;
+	 	gulp.src(event.path)
+	 	.pipe(jshint())
+	 	.pipe(jshint.reporter(jshintStylish))
+	 	.pipe(notify({ message: msg}));
+		gutil.log(msg);
+	 });
+
+	 gulp.watch('public/css/**/*.css', function(event) {
+	 	var msg =  'CSSLINTED: ' + event.path;
+	 	gulp.src(event.path)
+	 	.pipe(csslint())
+	 	.pipe(csslint.reporter())
+	 	.pipe(notify({ message: msg}));
+		gutil.log(msg);
+	 });
 });
 
 
