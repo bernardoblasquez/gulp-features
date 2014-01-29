@@ -1,38 +1,45 @@
-/* Gulp core */
+// Gulp core
 var gulp = require('gulp');
 
+// minification and concatenation 
 var usemin = require('gulp-usemin');
 
-/* utils */
+// utils
 var gutil = require('gulp-util');
 var clean = require('gulp-clean');
 var notify = require('gulp-notify');
 
-/* Linting Tools*/
+// Linting Tools
 var jshint = require('gulp-jshint');
 var jshintStylish = require('jshint-stylish');
 var csslint = require('gulp-csslint');
 
-/* Preprocessors */
+// Preprocessors
 var less = require('gulp-less');
 var coffee = require('gulp-coffee');
 
-/* Image handling */
+// Image handling
 var imagemin = require('gulp-imagemin');
 var cache = require('gulp-cache'); // cache files
 
-gulp.task('default', function() {
+
+/* Tasks in Gulp run concurrently together and have no order in which they’ll 
+finish, so we need to make sure the clean task is completed before running 
+additional tasks.
+
+Note: Are your tasks running before the dependencies are complete? 
+Make sure your dependency tasks are correctly using the async run hints: 
+take in a callback or return a promise or event stream.
+ */
+
+gulp.task('default', ['copy'], function() {
+	gulp.start('imagemin', 'usemin');
 
 });
 
-gulp.task('jshint-all', function() {
-
-	gulp.src('public/js/**/*.js')
-	.pipe(jshint())
-	.pipe(jshint.reporter(jshintStylish))
-	.pipe(notify({ message: 'jshint-all task complete' }));
+gulp.task('compile', function() {
+	return gulp.start('compile-less-all','compile-coffee-all');
 });
-
 
 gulp.task('compile-less-all', function() {
 
@@ -53,14 +60,16 @@ gulp.task('compile-coffee-all', function() {
 });
 
 gulp.task('clean', function() {
-
-	gulp.src('dist', {read: false})
+    /* without return, we have a problem. It seems that the next task 
+    is executed before this task completes
+	*/
+	return gulp.src('dist', {read: false})
 	.pipe(clean())
 	.pipe(notify({ message: 'Clean task complete' }));
 
 });
 
-gulp.task('copy',function() {
+gulp.task('copy', ['clean', 'compile'], function() {
 
 	return gulp.src('public/**/*')
 	.pipe(gulp.dest('dist'))
@@ -69,14 +78,14 @@ gulp.task('copy',function() {
 
 gulp.task('imagemin', function() {
 
-	return gulp.src('public/img/**/*')
+	return gulp.src('dist/img/**/*')
     .pipe(cache(imagemin({ optimizationLevel: 7, progressive: true, interlaced: true })))
     .pipe(gulp.dest('dist/img'))
     .pipe(notify({ message: 'Imagemin task complete' }));
 });
 
 gulp.task('usemin', function() {
-  gulp.src('public/**/*.html')
+  return gulp.src('dist/**/*.html')
     .pipe(usemin({
       cssmin: true,
       htmlmin: true,
